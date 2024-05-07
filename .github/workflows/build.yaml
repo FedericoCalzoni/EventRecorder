@@ -1,0 +1,56 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  linux_build:
+    name: Linux Flatpak Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install Flatpak
+      run: sudo apt-get install flatpak
+
+    - name: Build Flatpak
+      run: |
+        flatpak-builder --repo=repo --force-clean build-dir com.UBM.EventRecorder.json
+        flatpak build-export repo build-dir
+        flatpak build-bundle repo EventRecorder.flatpak com.UBM.EventRecorder
+
+    - name: Publish Flatpak Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: EventRecorder
+        path: repo/EventRecorder.flatpak
+
+  windows_build:
+    name: Windows Build
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.x
+
+    - name: Install dependencies
+      run: pip install pyinstaller
+
+    - name: Build Windows executable
+      run: pyinstaller --onefile --noconsole .\EventRecorder\EventRecorder.py
+
+    - name: Publish Windows Executable Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: EventRecorder
+        path: .\EventRecorder\dist\EventRecorder.exe
+
