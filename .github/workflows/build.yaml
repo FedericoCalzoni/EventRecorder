@@ -80,9 +80,6 @@ jobs:
         name: EventRecorder
         path: .\dist\EventRecorder.exe
 
-    - name: Move Windows Executable Artifact
-      run: mv .\dist\EventRecorder.exe EventRecorder.exe
-
   release:
     name: Create Release
     needs: [linux_build, windows_build]
@@ -90,6 +87,18 @@ jobs:
     if: github.ref == 'refs/heads/main'  # Only run on the main branch
 
     steps:
+    - name: Download Flatpak Artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: EventRecorder
+        path: .
+
+    - name: Download Windows Executable Artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: EventRecorder
+        path: .
+
     - name: Set release name
       id: set_release_name
       run: echo "RELEASE_NAME=$(date +'%Y-%m-%d-%H%M%S')" >> $GITHUB_ENV
@@ -107,12 +116,8 @@ jobs:
 
     - name: Change directory
       run: |
-        cd
         pwd
         ls -la
-
-    - name: List files in current directory
-      run: ls -la
 
     - name: Upload Flatpak Artifact
       id: upload_flatpak
