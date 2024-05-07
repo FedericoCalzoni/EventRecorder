@@ -107,7 +107,7 @@ jobs:
 
     - name: Change directory
       run: |
-        cd $GITHUB_WORKSPACE
+        cd ..
         pwd
         ls -la
 
@@ -121,7 +121,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ../EventRecorder.flatpak
+        asset_path: ./EventRecorder.flatpak
         asset_name: EventRecorder.flatpak
         asset_content_type: application/x-flatpak
 
@@ -132,6 +132,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ../EventRecorder.exe
+        asset_path: ./EventRecorder.exe
         asset_name: EventRecorder.exe
         asset_content_type: application/octet-stream
