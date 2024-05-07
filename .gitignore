@@ -4,3 +4,4 @@ repo/
 build/
 dist/
 .flatpak
+.spec
