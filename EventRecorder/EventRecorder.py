@@ -141,6 +141,7 @@ class EventRecorder(QWidget):
     def record_event(self):
         event_text = self.event_entry.toPlainText().strip()
         if not event_text:  # If event_text is empty
+            self.event_entry.clear() # to prevent enter key from being recorded
             return  # Return early
 
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
