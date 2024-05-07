@@ -29,9 +29,9 @@ jobs:
     - name: Build Flatpak
       run: |
         mkdir pyqt6
-        flatpak-builder --repo=repo --force-clean build-dir com.UBM.EventRecorder.json
+        flatpak-builder --repo=repo --force-clean build-dir io.github.FedericoCalzoni.EventRecorder.json
         flatpak build-export repo build-dir
-        flatpak build-bundle repo EventRecorder.flatpak com.UBM.EventRecorder
+        flatpak build-bundle repo EventRecorder.flatpak io.github.FedericoCalzoni.EventRecorder
 
     - name: Publish Flatpak Artifact
       uses: actions/upload-artifact@v2
