@@ -28,7 +28,7 @@ jobs:
 
     - name: Build Flatpak
       run: |
-      	mkdir pyqt6
+        mkdir pyqt6
         flatpak-builder --repo=repo --force-clean build-dir com.UBM.EventRecorder.json
         flatpak build-export repo build-dir
         flatpak build-bundle repo EventRecorder.flatpak com.UBM.EventRecorder
