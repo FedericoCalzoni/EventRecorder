@@ -37,6 +37,11 @@
                 {
                     "type": "file",
                     "path": "com.UBM.EventRecorder.desktop"
+                },
+                {
+                    "type": "file",
+                    "path": "com.UBM.EventRecorder.appdata.xml",
+                    "install": "/app/share/metainfo/com.UBM.EventRecorder.appdata.xml"
                 }
             ],
             "build-commands": [
