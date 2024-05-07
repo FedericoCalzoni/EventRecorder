@@ -28,12 +28,17 @@
                 {
                     "type": "dir",
                     "path": "EventRecorder"
+                },
+                {
+                    "type": "file",
+                    "path": "com.UBM.EventRecorder.desktop"
                 }
             ],
             "build-commands": [
                 "install -D EventRecorder.py /app/bin/EventRecorder.py",
                 "chmod +x /app/bin/EventRecorder.py",
-                "install -D logo.png /app/share/icons/hicolor/128x128/apps/com.UBM.EventRecorder.png"
+                "install -D logo.png /app/share/icons/hicolor/128x128/apps/com.UBM.EventRecorder.png",
+                "install -D com.UBM.EventRecorder.desktop /app/share/applications/com.UBM.EventRecorder.desktop"
             ]
         }
     ],
