@@ -1,13 +1,13 @@
 # Install
 ## Linux
-1. Download EventRecorder.flatpak
+1. Download [EventRecorder.flatpak](https://github.com/FedericoCalzoni/EventRecorder/releases)
 2. Double click and follow GUI install or run
 ```bash
 flatpak install EventRecorder.flatpak
 ```
 
 ## Windows
-1. Download EventRecorder.exe
+1. Download [EventRecorder.exe](https://github.com/FedericoCalzoni/EventRecorder/releases)
 2. Double click to start app
 
 
