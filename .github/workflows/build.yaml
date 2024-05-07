@@ -15,8 +15,9 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Install Flatpak
-      run: sudo apt install flatpak
-      run: flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+      run: | 
+      	sudo apt install flatpak
+      	flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
       
     - name: Install Flatpak-builder
       run: sudo apt install flatpak-builder
