@@ -65,10 +65,10 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: EventRecorder
-        path: .\EventRecorder\dist\EventRecorder.exe
+        path: .\dist\EventRecorder.exe
 
     - name: Move Windows Executable Artifact
-      run: mv .\EventRecorder\dist\EventRecorder.exe EventRecorder.exe
+      run: mv .\dist\EventRecorder.exe EventRecorder.exe
 
   release:
     name: Create Release
