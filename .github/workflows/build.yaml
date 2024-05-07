@@ -105,8 +105,11 @@ jobs:
         draft: false
         prerelease: false
 
-    - name: Print working directory
-      run: pwd
+    - name: Change directory
+      run: |
+        cd $GITHUB_WORKSPACE
+        pwd
+        ls -la
 
     - name: List files in current directory
       run: ls -la
