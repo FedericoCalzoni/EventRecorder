@@ -108,6 +108,9 @@ jobs:
     - name: Print working directory
       run: pwd
 
+    - name: List files in current directory
+      run: ls -la
+
     - name: Upload Flatpak Artifact
       id: upload_flatpak
       uses: actions/upload-release-asset@v1
@@ -115,7 +118,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: EventRecorder.flatpak
+        asset_path: ../EventRecorder.flatpak
         asset_name: EventRecorder.flatpak
         asset_content_type: application/x-flatpak
 
@@ -126,6 +129,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: EventRecorder.exe
+        asset_path: ../EventRecorder.exe
         asset_name: EventRecorder.exe
         asset_content_type: application/octet-stream
