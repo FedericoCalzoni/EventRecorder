@@ -2,7 +2,7 @@
 Version=1.0
 Type=Application
 Name=Event Recorder
-Icon=com.UBM.EventRecorder
+Icon=io.github.FedericoCalzoni.EventRecorder
 Exec=/app/bin/EventRecorder.py
 Terminal=false
 Categories=Utility;
