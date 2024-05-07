@@ -72,7 +72,7 @@ jobs:
       run: pip install pyinstaller
 
     - name: Build Windows executable
-      run: pyinstaller --onefile --noconsole .\EventRecorder\EventRecorder.py
+      run: pyinstaller --onefile --noconsole --hidden-import=PyQt6.QtWidgets --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui .\EventRecorder\EventRecorder.py
 
     - name: Publish Windows Executable Artifact
       uses: actions/upload-artifact@v2
