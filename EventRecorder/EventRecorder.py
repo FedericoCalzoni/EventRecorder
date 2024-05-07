@@ -13,11 +13,53 @@ from PyQt6.QtWidgets import (
     QPlainTextEdit,
     QSizePolicy,
     QLabel,
+    QDialog
 )
-from PyQt6.QtCore import QTimer
+from PyQt6.QtCore import QTimer, Qt
 from datetime import datetime
 import csv
 import sys
+
+class CustomDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.setWindowTitle("Event Recorder")
+
+        layout = QVBoxLayout()
+
+        label = QLabel("Would you like to create a new file or load an existing one?")
+        layout.addWidget(label)
+
+        # Create a horizontal layout for the buttons
+        button_layout = QHBoxLayout()
+
+        self.newButton = QPushButton("Create New")
+        self.newButton.clicked.connect(self.on_new)
+        button_layout.addWidget(self.newButton)
+
+        self.loadButton = QPushButton("Load Existing")
+        self.loadButton.clicked.connect(self.on_load)
+        button_layout.addWidget(self.loadButton)
+
+        # Add the horizontal layout to the main layout
+        layout.addLayout(button_layout)
+
+        self.setLayout(layout)
+
+        self.clicked_button = None
+
+    def on_new(self):
+        self.clicked_button = 'new'
+        self.accept()
+
+    def on_load(self):
+        self.clicked_button = 'load'
+        self.accept()
+
+    def on_exit(self):
+        self.clicked_button = 'exit'
+        self.reject()
 
 class EventRecorder(QWidget):
     def __init__(self):
@@ -27,7 +69,7 @@ class EventRecorder(QWidget):
         
         self.setWindowTitle("Event Recorder")
         self.setGeometry(100, 100, 950, 400)
-        
+                
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_clock)
         self.timer.start(1000)  # Update every second
@@ -158,22 +200,21 @@ class EventRecorder(QWidget):
     
                     
     def choose_file(self):
-        msgBox = QMessageBox()
-        msgBox.setText("Would you like to create a new file or load an existing one?")
-        newButton = msgBox.addButton("Create New", QMessageBox.ButtonRole.ActionRole)
-        loadButton = msgBox.addButton("Load Existing", QMessageBox.ButtonRole.ActionRole)
-        exitButton = msgBox.addButton("Exit", QMessageBox.ButtonRole.RejectRole)
-        msgBox.exec()
+        dialog = CustomDialog(self)
+        result = dialog.exec()
 
-        if msgBox.clickedButton() == newButton:
-            self.choose_save_location()
-        elif msgBox.clickedButton() == loadButton:
-            self.load_csv()
-        elif msgBox.clickedButton() == exitButton:
+        if result == QDialog.DialogCode.Accepted:
+            # If "Create New" was clicked in the dialog
+            if dialog.clicked_button == 'new':
+                self.choose_save_location()
+            # If "Load Existing" was clicked in the dialog
+            elif dialog.clicked_button == 'load':
+                self.load_csv()
+        elif result == QDialog.DialogCode.Rejected:
             sys.exit()
-            
+
         if self.csv_file_path == '':
-            self.choose_file() 
+            self.choose_file()
             
     def copy_to_entry(self, item):
         text_parts = item.text().split(": ", 1)
