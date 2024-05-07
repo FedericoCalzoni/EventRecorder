@@ -37,10 +37,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: EventRecorder
-        path: repo/EventRecorder.flatpak
-
-    - name: Move Flatpak Artifact
-      run: mv repo/EventRecorder.flatpak EventRecorder.flatpak
+        path: ./EventRecorder.flatpak
 
   windows_build:
     name: Windows Build
