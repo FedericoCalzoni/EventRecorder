@@ -23,8 +23,8 @@ jobs:
     - name: Install Flatpak Runtime and SDK
       run: |
         sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-        sudo flatpak install flathub org.kde.Platform//6.5
-        sudo flatpak install flathub org.kde.Sdk//6.5
+        sudo flatpak install --noninteractive flathub org.kde.Platform//6.7
+        sudo flatpak install --noninteractive flathub org.kde.Sdk//6.7
 
     - name: Build Flatpak
       run: |
