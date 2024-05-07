@@ -26,6 +26,11 @@
             "buildsystem": "simple",
             "sources": [
                 {
+                    "type": "git",
+                    "url": "https://github.com/FedericoCalzoni/EventRecorder.git",
+                    "branch": "main"
+                },
+                {
                     "type": "dir",
                     "path": "EventRecorder"
                 },

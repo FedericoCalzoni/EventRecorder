@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>com.UBM.EventRecorder</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>EventRecorder</name>
+  <summary>Record Timed Events</summary>
+  <description>
+    <p>
+        EventRecorder is a simple application to record timed events. It is useful to keep track of the time spent on different tasks, and to generate reports.
+    </p>
+  </description>
+  <launchable type="desktop-id">com.UBM.EventRecorder.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://example.com/screenshot1.png</image>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">https://github.com/FedericoCalzoni/EventRecorder</url>
+  <content_rating type="oars-1.1" />
+</component>
