@@ -9,13 +9,14 @@ from PyQt6.QtWidgets import (
     QListWidget,
     QLineEdit,
     QFileDialog,
-    QMessageBox,
     QPlainTextEdit,
     QSizePolicy,
     QLabel,
-    QDialog
+    QDialog,
+    QCheckBox
 )
-from PyQt6.QtCore import QTimer, Qt
+from PyQt6.QtCore import QTimer
+from PyQt6.QtGui import QTextCursor
 from datetime import datetime
 import csv
 import sys
@@ -113,6 +114,10 @@ class EventRecorder(QWidget):
         self.event_entry.blockCountChanged.connect(self.check_for_enter)
         self.right_column_layout.addWidget(QLabel("Enter Event:"))
         self.right_column_layout.addWidget(self.event_entry)
+        
+        self.auto_delete_checkbox = QCheckBox('Clear event after recording')
+        self.auto_delete_checkbox.setChecked(True)
+        self.right_column_layout.addWidget(self.auto_delete_checkbox)
 
         self.record_button = QPushButton('Record Event (Press Enter)')
         self.record_button.clicked.connect(self.record_event)
@@ -121,9 +126,6 @@ class EventRecorder(QWidget):
         self.delete_button = QPushButton('Delete Selected')
         self.delete_button.clicked.connect(self.delete_selected)
         self.right_column_layout.addWidget(self.delete_button)
-
-        # self.auto_delete_checkbox = QCheckBox('Auto Delete')
-        # self.right_column_layout.addWidget(self.auto_delete_checkbox)
         
         self.choose_file()
 
@@ -145,16 +147,25 @@ class EventRecorder(QWidget):
         self.listbox.addItem(f"{current_time}: {event_text}")
         self.listbox.scrollToItem(self.listbox.item(self.listbox.count() - 1))  # Scroll to the last item
 
-        # if self.auto_delete_checkbox.isChecked():
-        #     self.delete_selected()
-
         # Write to the CSV file
         with open(self.csv_file_path, mode="w", newline="") as file:
             writer = csv.writer(file)
             for i in range(self.listbox.count()):
                 writer.writerow(self.listbox.item(i).text().split(": ", 1))
-                
-        self.event_entry.clear()
+        
+        if self.auto_delete_checkbox.isChecked():        
+            self.event_entry.clear()
+        else:
+            current_text = self.event_entry.toPlainText()
+            parts = current_text.rsplit('\n', 1)
+            cleaned_text = ''.join(parts)
+            self.event_entry.setPlainText(cleaned_text)
+            
+            # Move the cursor to the end of the text
+            cursor = self.event_entry.textCursor()
+            cursor.movePosition(QTextCursor.MoveOperation.End)
+            self.event_entry.setTextCursor(cursor)
+                    
 
     def delete_selected(self):
         for item in self.listbox.selectedItems():
