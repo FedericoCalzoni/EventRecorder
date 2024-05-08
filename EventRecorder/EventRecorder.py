@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
     QDialog,
     QCheckBox,
     QGridLayout,
-    QInputDialog
+    QMessageBox
 )
 from PyQt6.QtCore import QTimer, QUrl
 from PyQt6.QtGui import QTextCursor, QDesktopServices, QFont
@@ -282,22 +282,26 @@ class EventRecorder(QWidget):
         
     #Custom buttons
     def load_config(self, config_file_path):
-        config = configparser.ConfigParser()
-        config.read(config_file_path)
-        
-        # Remove all buttons from the grid layout
-        for i in reversed(range(self.button2_grid.count())):
-            widget_to_remove = self.button2_grid.itemAt(i).widget()
-            self.button2_grid.removeWidget(widget_to_remove)
-            widget_to_remove.setParent(None)
-        
-        # Add the buttons from the config file
-        for index, (button_name, button_text) in enumerate(config['DEFAULT'].items()):
-            button = QPushButton(button_text)
-            button.clicked.connect(lambda checked, button=button: self.record_event(button.text(), button))
-            row = index // 3  # Integer division to get the row number
-            col = index % 3  # Remainder to get the column number
-            self.button2_grid.addWidget(button, row, col)
+        try:
+            config = configparser.ConfigParser()
+            config.read(config_file_path)
+            
+            # Remove all buttons from the grid layout
+            for i in reversed(range(self.button2_grid.count())):
+                widget_to_remove = self.button2_grid.itemAt(i).widget()
+                self.button2_grid.removeWidget(widget_to_remove)
+                widget_to_remove.setParent(None)
+            
+            # Add the buttons from the config file
+            for index, (button_name, button_text) in enumerate(config['DEFAULT'].items()):
+                button = QPushButton(button_text)
+                button.clicked.connect(lambda checked, button=button: self.record_event(button.text(), button))
+                row = index // 3  # Integer division to get the row number
+                col = index % 3  # Remainder to get the column number
+                self.button2_grid.addWidget(button, row, col)
+                
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Malformed config file: {e}")
     
                     
     def choose_file(self):
