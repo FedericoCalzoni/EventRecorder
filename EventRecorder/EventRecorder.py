@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
     QInputDialog
 )
 from PyQt6.QtCore import QTimer, QUrl
-from PyQt6.QtGui import QTextCursor, QDesktopServices
+from PyQt6.QtGui import QTextCursor, QDesktopServices, QFont
 from datetime import datetime
 import csv
 import sys
@@ -144,6 +144,7 @@ class EventRecorder(QWidget):
         self.left_column_layout.addWidget(self.listbox_label)
 
         self.listbox = QListWidget()
+        self.listbox.setFont(QFont("TypeWriter"))
         self.listbox.itemDoubleClicked.connect(self.copy_to_entry) 
         self.left_column_layout.addWidget(self.listbox)
         
@@ -155,6 +156,7 @@ class EventRecorder(QWidget):
         
         self.event_entry = QPlainTextEdit()
         self.event_entry.setPlaceholderText("Insert text here")
+        self.event_entry.setFont(QFont("TypeWriter"))
         self.event_entry.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.event_entry.blockCountChanged.connect(self.check_for_enter)
         self.right_column_layout.addWidget(QLabel("Enter Event:"))
@@ -165,7 +167,7 @@ class EventRecorder(QWidget):
         self.right_column_layout.addWidget(self.auto_delete_checkbox)
 
         self.record_button = QPushButton('Record Event (Press Enter)')
-        self.record_button.clicked.connect(self.record_event)
+        self.record_button.clicked.connect(lambda: self.record_event(self.event_entry.toPlainText().strip()))
         self.right_column_layout.addWidget(self.record_button)
 
         self.delete_button = QPushButton('Delete Selected')
@@ -200,7 +202,7 @@ class EventRecorder(QWidget):
         current_time = datetime.now().strftime("Current time: %Y-%m-%d %H:%M:%S")
         self.clock_label.setText(current_time)
 
-    def record_event(self, text=None):
+    def record_event(self, text=None, button=None):
         event_text = text if text is not None else self.event_entry.toPlainText().strip()
         if not event_text:  # If event_text is empty
             self.event_entry.clear() # to prevent enter key from being recorded
@@ -217,7 +219,7 @@ class EventRecorder(QWidget):
             for i in range(self.listbox.count()):
                 writer.writerow(self.listbox.item(i).text().split(": ", 2))
         
-        if self.auto_delete_checkbox.isChecked():        
+        if self.auto_delete_checkbox.isChecked() and button is None:        
             self.event_entry.clear()
         else:
             current_text = self.event_entry.toPlainText()
@@ -282,9 +284,17 @@ class EventRecorder(QWidget):
     def load_config(self, config_file_path):
         config = configparser.ConfigParser()
         config.read(config_file_path)
+        
+        # Remove all buttons from the grid layout
+        for i in reversed(range(self.button2_grid.count())):
+            widget_to_remove = self.button2_grid.itemAt(i).widget()
+            self.button2_grid.removeWidget(widget_to_remove)
+            widget_to_remove.setParent(None)
+        
+        # Add the buttons from the config file
         for index, (button_name, button_text) in enumerate(config['DEFAULT'].items()):
             button = QPushButton(button_text)
-            button.clicked.connect(lambda checked, button=button: self.record_event(button.text()))
+            button.clicked.connect(lambda checked, button=button: self.record_event(button.text(), button))
             row = index // 3  # Integer division to get the row number
             col = index % 3  # Remainder to get the column number
             self.button2_grid.addWidget(button, row, col)
