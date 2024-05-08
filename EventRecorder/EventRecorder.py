@@ -110,6 +110,7 @@ class EventRecorder(QWidget):
         self.right_column_layout.addLayout(self.time_layout)
         
         self.event_entry = QPlainTextEdit()
+        self.event_entry.setPlaceholderText("Insert text here")
         self.event_entry.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.event_entry.blockCountChanged.connect(self.check_for_enter)
         self.right_column_layout.addWidget(QLabel("Enter Event:"))
@@ -133,7 +134,7 @@ class EventRecorder(QWidget):
         self.main_layout.addLayout(self.right_column_layout)
 
         self.setLayout(self.main_layout)
-        
+                
     def update_clock(self):
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.clock_label.setText(current_time)
@@ -166,6 +167,8 @@ class EventRecorder(QWidget):
             cursor = self.event_entry.textCursor()
             cursor.movePosition(QTextCursor.MoveOperation.End)
             self.event_entry.setTextCursor(cursor)
+        
+        self.update_listbox()
                     
 
     def delete_selected(self):
@@ -177,6 +180,7 @@ class EventRecorder(QWidget):
             writer = csv.writer(file)
             for i in range(self.listbox.count()):
                 writer.writerow(self.listbox.item(i).text().split(": ", 1))
+        self.update_listbox()
 
     def choose_save_location(self):
         file, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()", "","CSV Files (*.csv)")
@@ -198,6 +202,7 @@ class EventRecorder(QWidget):
                 reader = csv.reader(csv_file)
                 for row in reader:
                     self.listbox.addItem(f"{row[0]}: {row[1]}")
+        self.update_listbox()
     
     def load_csv(self):
         file, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","CSV Files (*.csv)")
@@ -209,6 +214,7 @@ class EventRecorder(QWidget):
                 for row in reader:
                     self.listbox.addItem(f"{row[0]}: {row[1]}")
             self.file_path_display.setText(file)
+        self.update_listbox()
     
                     
     def choose_file(self):
@@ -239,7 +245,13 @@ class EventRecorder(QWidget):
         text = self.event_entry.toPlainText()
         if text and text[-1] == "\n":
             self.record_event()
-
+            
+    def update_listbox(self):
+        if self.listbox.count() == 0:
+            # inform user that there are no events by making the background color of the listbox gray
+            self.listbox.setStyleSheet("background-color: gray")
+        else:
+            self.listbox.setStyleSheet("background-color: none")
 def main():
     app = QApplication(sys.argv)
     
