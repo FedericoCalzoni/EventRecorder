@@ -13,13 +13,18 @@ from PyQt6.QtWidgets import (
     QSizePolicy,
     QLabel,
     QDialog,
-    QCheckBox
+    QCheckBox,
+    QGridLayout,
+    QInputDialog
 )
-from PyQt6.QtCore import QTimer
-from PyQt6.QtGui import QTextCursor
+from PyQt6.QtCore import QTimer, QUrl
+from PyQt6.QtGui import QTextCursor, QDesktopServices
 from datetime import datetime
 import csv
 import sys
+import configparser
+import os
+
 
 class CustomDialog(QDialog):
     def __init__(self, parent=None):
@@ -63,10 +68,46 @@ class CustomDialog(QDialog):
         self.reject()
 
 class EventRecorder(QWidget):
+                
+    def create_config(self):
+        config = configparser.ConfigParser()
+        config['DEFAULT'] = {'Button1': 'text1',
+                            'Button2': 'text2'}
+
+        # Get the user's home directory
+        home_dir = os.path.expanduser('~')
+
+        # Choose the directory for the config file based on the operating system
+        if os.name == 'nt':  # Windows
+            config_dir = os.path.join(home_dir, 'AppData', 'Roaming')
+        else:  # Linux and other Unix-like systems
+            config_dir = os.path.join(home_dir, '.config')
+
+        # Create the config directory if it doesn't exist
+        os.makedirs(config_dir, exist_ok=True)
+
+        config_file_path = os.path.join(config_dir, 'EventRecorder.ini')
+
+        # Only create the config file if it doesn't already exist
+        if not os.path.exists(config_file_path):
+            with open(config_file_path, 'w') as configfile:
+                config.write(configfile)
+                
+        return config_file_path
+
+
+    # def change_button_text(self, button):
+    #     text, ok = QInputDialog.getText(self, 'Change Button Text', 'Enter new button text:')
+    #     if ok:
+    #         button.setText(text)
+                
     def __init__(self):
         super().__init__()
-                
+             
         self.csv_file_path = ''
+        
+        config_file_path = self.create_config()
+        
         
         self.setWindowTitle("Event Recorder")
         self.setGeometry(100, 100, 950, 400)
@@ -81,9 +122,6 @@ class EventRecorder(QWidget):
         self.right_column_layout = QVBoxLayout()
         
         self.file_path_layout = QHBoxLayout()
-        self.save_button = QPushButton('Save to new path')
-        self.save_button.clicked.connect(self.choose_save_location)
-        self.right_column_layout.addWidget(self.save_button)
         self.file_path_layout.addWidget(QLabel("File Path:"))
         self.file_path_display = QLineEdit()
         self.file_path_display.setReadOnly(True)
@@ -91,9 +129,16 @@ class EventRecorder(QWidget):
         self.file_path_layout.addWidget(self.file_path_display)
         self.left_column_layout.addLayout(self.file_path_layout)
         
+        self.load_grid = QGridLayout()
+        self.right_column_layout.addLayout(self.load_grid)
+
+        self.save_button = QPushButton('Save to new path')
+        self.save_button.clicked.connect(self.choose_save_location)
+        self.load_grid.addWidget(self.save_button, 0, 0)
+
         self.load_button = QPushButton('Load File')
         self.load_button.clicked.connect(self.load_csv)
-        self.right_column_layout.addWidget(self.load_button)        
+        self.load_grid.addWidget(self.load_button, 0, 1)       
 
         self.listbox_label = QLabel("Event List: (double click to copy)")
         self.left_column_layout.addWidget(self.listbox_label)
@@ -103,7 +148,6 @@ class EventRecorder(QWidget):
         self.left_column_layout.addWidget(self.listbox)
         
         self.time_layout = QHBoxLayout()
-        self.time_layout.addWidget(QLabel("Current Time:"))
         self.clock_label = QLineEdit()
         self.clock_label.setReadOnly(True)
         self.time_layout.addWidget(self.clock_label)
@@ -128,6 +172,23 @@ class EventRecorder(QWidget):
         self.delete_button.clicked.connect(self.delete_selected)
         self.right_column_layout.addWidget(self.delete_button)
         
+        self.button1_grid = QGridLayout()
+        
+        self.button2_grid = QGridLayout()
+                
+        self.load_config(config_file_path)
+
+        # Add the grid to the right column layout
+        self.left_column_layout.addLayout(self.button2_grid)
+        
+        self.open_config_button = QPushButton('Open Config File')
+        self.reload_button = QPushButton('Reload Config File')
+        self.open_config_button.clicked.connect(self.open_config)
+        self.button1_grid.addWidget(self.open_config_button, 0, 0)
+        self.reload_button.clicked.connect(lambda: self.load_config(config_file_path))
+        self.button1_grid.addWidget(self.reload_button, 0, 1)
+        self.left_column_layout.addLayout(self.button1_grid)
+        
         self.choose_file()
 
         self.main_layout.addLayout(self.left_column_layout)
@@ -136,24 +197,25 @@ class EventRecorder(QWidget):
         self.setLayout(self.main_layout)
                 
     def update_clock(self):
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        current_time = datetime.now().strftime("Current time: %Y-%m-%d %H:%M:%S")
         self.clock_label.setText(current_time)
 
-    def record_event(self):
-        event_text = self.event_entry.toPlainText().strip()
+    def record_event(self, text=None):
+        event_text = text if text is not None else self.event_entry.toPlainText().strip()
         if not event_text:  # If event_text is empty
             self.event_entry.clear() # to prevent enter key from being recorded
             return  # Return early
-
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.listbox.addItem(f"{current_time}: {event_text}")
+        
+        current_day = datetime.now().strftime("%Y-%m-%d")
+        current_hour= datetime.now().strftime("%H:%M:%S")
+        self.listbox.addItem(f"{current_day}: {current_hour}: {event_text}")
         self.listbox.scrollToItem(self.listbox.item(self.listbox.count() - 1))  # Scroll to the last item
 
         # Write to the CSV file
         with open(self.csv_file_path, mode="w", newline="") as file:
             writer = csv.writer(file)
             for i in range(self.listbox.count()):
-                writer.writerow(self.listbox.item(i).text().split(": ", 1))
+                writer.writerow(self.listbox.item(i).text().split(": ", 2))
         
         if self.auto_delete_checkbox.isChecked():        
             self.event_entry.clear()
@@ -179,7 +241,7 @@ class EventRecorder(QWidget):
         with open(self.csv_file_path, mode="w", newline="") as file:
             writer = csv.writer(file)
             for i in range(self.listbox.count()):
-                writer.writerow(self.listbox.item(i).text().split(": ", 1))
+                writer.writerow(self.listbox.item(i).text().split(": ", 2))
         self.update_listbox()
 
     def choose_save_location(self):
@@ -212,9 +274,20 @@ class EventRecorder(QWidget):
             with open(file, mode="r", newline="") as csv_file:
                 reader = csv.reader(csv_file)
                 for row in reader:
-                    self.listbox.addItem(f"{row[0]}: {row[1]}")
+                    self.listbox.addItem(f"{row[0]}: {row[1]}: {row[2]}")
             self.file_path_display.setText(file)
         self.update_listbox()
+        
+    #Custom buttons
+    def load_config(self, config_file_path):
+        config = configparser.ConfigParser()
+        config.read(config_file_path)
+        for index, (button_name, button_text) in enumerate(config['DEFAULT'].items()):
+            button = QPushButton(button_text)
+            button.clicked.connect(lambda checked, button=button: self.record_event(button.text()))
+            row = index // 3  # Integer division to get the row number
+            col = index % 3  # Remainder to get the column number
+            self.button2_grid.addWidget(button, row, col)
     
                     
     def choose_file(self):
@@ -235,9 +308,9 @@ class EventRecorder(QWidget):
             self.choose_file()
             
     def copy_to_entry(self, item):
-        text_parts = item.text().split(": ", 1)
-        if len(text_parts) > 1 and text_parts[1]:
-            self.event_entry.setPlainText(text_parts[1])
+        text_parts = item.text().split(": ", 2)
+        if len(text_parts) > 2 and text_parts[2]:
+            self.event_entry.setPlainText(text_parts[2])
         else:
             self.event_entry.setPlainText("")
         
@@ -248,10 +321,28 @@ class EventRecorder(QWidget):
             
     def update_listbox(self):
         if self.listbox.count() == 0:
-            # inform user that there are no events by making the background color of the listbox gray
-            self.listbox.setStyleSheet("background-color: gray")
+            # inform user that there are no events
+            self.listbox.setStyleSheet("background-color: rgb(230, 230, 230)")
+            self.listbox_label.setText("Event List: (empty list)")
         else:
             self.listbox.setStyleSheet("background-color: none")
+            self.listbox_label.setText("Event List: (double click to copy)")
+            
+    def open_config(self):
+            home_dir = os.path.expanduser('~')
+
+            if os.name == 'nt':  # Windows
+                config_dir = os.path.join(home_dir, 'AppData', 'Roaming')
+            else:  # Linux and other Unix-like systems
+                config_dir = os.path.join(home_dir, '.config')
+
+            config_file_path = os.path.join(config_dir, 'EventRecorder.ini')
+
+            # Open the config file with the default application
+            QDesktopServices.openUrl(QUrl.fromLocalFile(config_file_path))
+
+        
+        
 def main():
     app = QApplication(sys.argv)
     
