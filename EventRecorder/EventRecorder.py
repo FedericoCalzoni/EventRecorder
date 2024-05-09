@@ -77,8 +77,8 @@ class EventRecorder(QWidget):
                 
     def create_config(self):
         config = configparser.ConfigParser()
-        config['DEFAULT'] = {'Button1': 'text1',
-                            'Button2': 'text2'}
+        config['BUTTONS'] = {'Button1': 'text1',
+                             'Button2': 'text2'}
 
         # Get the user's home directory
         home_dir = os.path.expanduser('~')
@@ -97,10 +97,20 @@ class EventRecorder(QWidget):
         # Only create the config file if it doesn't already exist
         if not os.path.exists(config_file_path):
             with open(config_file_path, 'w') as configfile:
+                configfile.write("; You can add as many buttons as you want!\n")
+                configfile.write("; Add new lines with the format:\n")
+                configfile.write("; 'ButtonName = ButtonText'\n")
+                configfile.write("; Just make sure to have different ButtonName for each button!\n")
                 config.write(configfile)
-                
+        else: #  replace [DEFAULT] with [BUTTONS] (due to a braking change). All the else should be removed in the future. No one should have [DEFAULT] in their config file.
+            with open(config_file_path, 'r') as configfile:                 
+                file_contents = configfile.read()                           
+            file_contents = file_contents.replace('[DEFAULT]', '[BUTTONS]') 
+            with open(config_file_path, 'w') as configfile:
+                configfile.write(file_contents)
+
         return config_file_path
-                
+    
     def __init__(self):
         super().__init__()
              
@@ -302,15 +312,17 @@ class EventRecorder(QWidget):
                 widget_to_remove.setParent(None)
             
             # Add the buttons from the config file
-            for index, (button_name, button_text) in enumerate(config['DEFAULT'].items()):
-                button = QPushButton(button_text)
-                button.clicked.connect(lambda checked, button=button: self.record_event(button.text(), button))
+            for index, (button_name, button_text) in enumerate(config['BUTTONS'].items()):
+                # Limit the displayed text to 20 characters
+                displayed_text = button_text[:20] + '...' if len(button_text) > 20 else button_text
+                button = QPushButton(displayed_text)
+                button.clicked.connect(lambda checked, button_text=button_text: self.record_event(button_text, button))
                 row = index // 3  # Integer division to get the row number
                 col = index % 3  # Remainder to get the column number
                 self.button2_grid.addWidget(button, row, col)
                 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Malformed config file: {e}")
+            QMessageBox.critical(self, "Error", f"Malformed config file: {e} \n\nPlease check the config file by clicking the 'Open Config File' button.\n\nThe structure should be the following:\n\n[BUTTONS]\nButton1=text1\nButton2=text2\n...")
     
                     
     def choose_file(self):
