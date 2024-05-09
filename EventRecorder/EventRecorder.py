@@ -15,9 +15,9 @@ from PyQt6.QtWidgets import (
     QDialog,
     QCheckBox,
     QGridLayout,
-    QMessageBox
+    QMessageBox,
 )
-from PyQt6.QtCore import QTimer, QUrl, Qt
+from PyQt6.QtCore import QTimer, QUrl, Qt, QSize
 from PyQt6.QtGui import QTextCursor, QDesktopServices, QFont
 from datetime import datetime
 import csv
@@ -56,7 +56,9 @@ class CustomDialog(QDialog):
         self.clicked_button = None
         
         # Set the size of the dialog to its current size and remove the maximize button
-        self.setFixedSize(self.layout().sizeHint())
+        size_hint = self.layout().sizeHint()
+        adjusted_size = QSize(size_hint.width() + 20, size_hint.height() + 50)
+        self.setFixedSize(adjusted_size)
         self.setWindowFlag(Qt.WindowType.Dialog, True)
 
     def on_new(self):
@@ -98,12 +100,6 @@ class EventRecorder(QWidget):
                 config.write(configfile)
                 
         return config_file_path
-
-
-    # def change_button_text(self, button):
-    #     text, ok = QInputDialog.getText(self, 'Change Button Text', 'Enter new button text:')
-    #     if ok:
-    #         button.setText(text)
                 
     def __init__(self):
         super().__init__()
