@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
     QGridLayout,
     QMessageBox
 )
-from PyQt6.QtCore import QTimer, QUrl
+from PyQt6.QtCore import QTimer, QUrl, Qt
 from PyQt6.QtGui import QTextCursor, QDesktopServices, QFont
 from datetime import datetime
 import csv
@@ -30,7 +30,7 @@ class CustomDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.setWindowTitle("Event Recorder")
+        self.setWindowTitle("File Selection")
 
         layout = QVBoxLayout()
 
@@ -54,6 +54,10 @@ class CustomDialog(QDialog):
         self.setLayout(layout)
 
         self.clicked_button = None
+        
+        # Set the size of the dialog to its current size and remove the maximize button
+        self.setFixedSize(self.layout().sizeHint())
+        self.setWindowFlag(Qt.WindowType.Dialog, True)
 
     def on_new(self):
         self.clicked_button = 'new'
@@ -190,13 +194,14 @@ class EventRecorder(QWidget):
         self.reload_button.clicked.connect(lambda: self.load_config(config_file_path))
         self.button1_grid.addWidget(self.reload_button, 0, 1)
         self.left_column_layout.addLayout(self.button1_grid)
-        
-        self.choose_file()
-
+                
         self.main_layout.addLayout(self.left_column_layout)
         self.main_layout.addLayout(self.right_column_layout)
 
         self.setLayout(self.main_layout)
+        
+        # to show the UI before the dialog
+        QTimer.singleShot(0, self.choose_file)
                 
     def update_clock(self):
         current_time = datetime.now().strftime("Current time: %Y-%m-%d %H:%M:%S")
@@ -247,38 +252,46 @@ class EventRecorder(QWidget):
         self.update_listbox()
 
     def choose_save_location(self):
-        file, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()", "","CSV Files (*.csv)")
-        if file:
-            if not file.endswith('.csv'):
-                file += '.csv'
-            self.csv_file_path = file
-            self.file_path_display.setText(file)
-            
-            # Write the current events to the new file
-            with open(file, mode="w", newline="") as csv_file:
-                writer = csv.writer(csv_file)
-                for i in range(self.listbox.count()):
-                    writer.writerow(self.listbox.item(i).text().split(": ", 1))
-            
-            # Load the events from the new file
-            self.listbox.clear()
-            with open(file, mode="r", newline="") as csv_file:
-                reader = csv.reader(csv_file)
-                for row in reader:
-                    self.listbox.addItem(f"{row[0]}: {row[1]}")
-        self.update_listbox()
+        try:
+            file, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()", "","CSV Files (*.csv)")
+            if file:
+                if not file.endswith('.csv'):
+                    file += '.csv'
+                self.csv_file_path = file
+                self.file_path_display.setText(file)
+                
+                # Write the current events to the new file
+                with open(file, mode="w", newline="") as csv_file:
+                    writer = csv.writer(csv_file)
+                    for i in range(self.listbox.count()):
+                        writer.writerow(self.listbox.item(i).text().split(": ", 1))
+                
+                # Load the events from the new file
+                self.listbox.clear()
+                with open(file, mode="r", newline="") as csv_file:
+                    reader = csv.reader(csv_file)
+                    for row in reader:
+                        self.listbox.addItem(f"{row[0]}: {row[1]}")
+            self.update_listbox()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error saving file: {e}")
+            self.choose_file()
     
     def load_csv(self):
-        file, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","CSV Files (*.csv)")
-        if file:
-            self.csv_file_path = file
-            self.listbox.clear()
-            with open(file, mode="r", newline="") as csv_file:
-                reader = csv.reader(csv_file)
-                for row in reader:
-                    self.listbox.addItem(f"{row[0]}: {row[1]}: {row[2]}")
-            self.file_path_display.setText(file)
-        self.update_listbox()
+        try:
+            file, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","CSV Files (*.csv)")
+            if file:
+                self.csv_file_path = file
+                self.listbox.clear()
+                with open(file, mode="r", newline="") as csv_file:
+                    reader = csv.reader(csv_file)
+                    for row in reader:
+                        self.listbox.addItem(f"{row[0]}: {row[1]}: {row[2]}")
+                self.file_path_display.setText(file)
+            self.update_listbox()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error loading file, not a valid CSV: {e}")
+            self.choose_file()
         
     #Custom buttons
     def load_config(self, config_file_path):
@@ -306,6 +319,7 @@ class EventRecorder(QWidget):
                     
     def choose_file(self):
         dialog = CustomDialog(self)
+        dialog.setModal(True)
         result = dialog.exec()
 
         if result == QDialog.DialogCode.Accepted:
