@@ -33,10 +33,10 @@ jobs:
         sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
         sudo flatpak install --noninteractive flathub org.kde.Platform//6.7
         sudo flatpak install --noninteractive flathub org.kde.Sdk//6.7
+        sudo flatpak install --noninteractive flathub com.riverbankcomputing.PyQt.BaseApp//6.7
 
     - name: Build Flatpak
       run: |
-        mkdir pyqt6
         flatpak-builder --repo=repo --force-clean build-dir io.github.FedericoCalzoni.EventRecorder.json
         flatpak build-export repo build-dir
         flatpak build-bundle repo EventRecorder.flatpak io.github.FedericoCalzoni.EventRecorder
