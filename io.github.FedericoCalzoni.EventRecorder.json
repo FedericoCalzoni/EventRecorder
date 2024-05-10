@@ -6,6 +6,22 @@
     "command": "EventRecorder.py",
     "modules": [
         {
+            "name": "python3-pyqt6",
+            "buildsystem": "simple",
+            "sources": [
+                {
+                    "type": "dir",
+                    "path": "pyqt6"
+                }
+            ],
+            "build-commands": [
+                "pip3 install --prefix=/app PyQt6"
+            ],
+            "build-options" : {
+                "build-args" : ["--share=network"]
+            }
+        },
+        {
             "name": "EventRecorder",
             "buildsystem": "simple",
             "sources": [

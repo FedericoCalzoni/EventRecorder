@@ -102,7 +102,7 @@ class EventRecorder(QWidget):
                 configfile.write("; 'ButtonName = ButtonText'\n")
                 configfile.write("; Just make sure to have different ButtonName for each button!\n")
                 config.write(configfile)
-        else: #  replace [DEFAULT] with [BUTTONS] (due to a braking change). TODO: the whole else should be removed in the future. No one should have [DEFAULT] in their config file.
+        else: #  replace [DEFAULT] with [BUTTONS] (due to a braking change). All the else should be removed in the future. No one should have [DEFAULT] in their config file.
             with open(config_file_path, 'r') as configfile:                 
                 file_contents = configfile.read()                           
             file_contents = file_contents.replace('[DEFAULT]', '[BUTTONS]') 
