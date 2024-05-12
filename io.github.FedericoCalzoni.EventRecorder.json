@@ -9,6 +9,12 @@
         "/app/cleanup-BaseApp.sh"
     ],
     "command": "EventRecorder.py",
+    "finish-args": [
+        "--socket=fallback-x11",
+        "--share=ipc",
+        "--socket=wayland",
+        "--filesystem=home"
+    ],
     "modules": [
         {
             "name": "EventRecorder",
@@ -29,21 +35,16 @@
                 },
                 {
                     "type": "file",
-                    "path": "io.github.FedericoCalzoni.EventRecorder.appdata.xml",
-                    "install": "/app/share/metainfo/io.github.FedericoCalzoni.EventRecorder.appdata.xml"
+                    "path": "io.github.FedericoCalzoni.EventRecorder.metainfo.xml"
                 }
             ],
             "build-commands": [
                 "install -D EventRecorder.py /app/bin/EventRecorder.py",
                 "chmod +x /app/bin/EventRecorder.py",
                 "install -D logo.png /app/share/icons/hicolor/128x128/apps/io.github.FedericoCalzoni.EventRecorder.png",
-                "install -D io.github.FedericoCalzoni.EventRecorder.desktop /app/share/applications/io.github.FedericoCalzoni.EventRecorder.desktop"
+                "install -D io.github.FedericoCalzoni.EventRecorder.desktop /app/share/applications/io.github.FedericoCalzoni.EventRecorder.desktop",
+                "install -D io.github.FedericoCalzoni.EventRecorder.metainfo.xml /app/share/metainfo/io.github.FedericoCalzoni.EventRecorder.metainfo.xml"
             ]
         }
-    ],
-    "finish-args": [
-        "--socket=x11",
-        "--socket=wayland",
-        "--filesystem=home"
     ]
 }
