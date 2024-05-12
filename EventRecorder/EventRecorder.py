@@ -24,6 +24,7 @@ import csv
 import sys
 import configparser
 import os
+import subprocess
 
 
 class CustomDialog(QDialog):
@@ -87,8 +88,7 @@ class EventRecorder(QWidget):
         else:  # Linux and other Unix-like systems
             # Get the XDG_CONFIG_HOME directory, falling back to ~/.config if it's not set
             config_dir = os.getenv('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
-            #config_dir = os.path.join(home_dir, '.config')
-            
+                        
         # Create the config directory if it doesn't exist
         os.makedirs(config_dir, exist_ok=True)
 
@@ -135,7 +135,7 @@ class EventRecorder(QWidget):
         self.file_path_layout.addWidget(QLabel("File Path:"))
         self.file_path_display = QLineEdit()
         self.file_path_display.setReadOnly(True)
-        self.file_path_display.setText(self.csv_file_path) 
+        self.file_path_display.setText(self.get_real_path(self.csv_file_path)) 
         self.file_path_layout.addWidget(self.file_path_display)
         self.left_column_layout.addLayout(self.file_path_layout)
         
@@ -368,14 +368,34 @@ class EventRecorder(QWidget):
             home_dir = os.path.expanduser('~')
 
             if os.name == 'nt':  # Windows
+                home_dir = os.path.expanduser('~')
                 config_dir = os.path.join(home_dir, 'AppData', 'Roaming')
             else:  # Linux and other Unix-like systems
-                config_dir = os.path.join(home_dir, '.config')
+                # Get the XDG_CONFIG_HOME directory, falling back to ~/.config if it's not set
+                config_dir = os.getenv('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
 
             config_file_path = os.path.join(config_dir, 'EventRecorder.ini')
 
             # Open the config file with the default application
             QDesktopServices.openUrl(QUrl.fromLocalFile(config_file_path))
+            
+    def get_real_path(self, sandbox_path):
+            
+        if os.name == 'nt':
+            return sandbox_path
+        else:
+            if not sandbox_path:
+                return sandbox_path
+            # Get the document ID from the sandbox path
+            doc_id = os.path.basename(os.path.dirname(sandbox_path))
+
+            # Run xdg-document-portal to get the real path
+            result = subprocess.run(['xdg-document-portal', 'info', doc_id, doc_id], stdout=subprocess.PIPE)
+
+            # Parse the output to get the real path
+            real_path = result.stdout.decode().split('path:')[1].strip()
+
+        return real_path
 
         
         
