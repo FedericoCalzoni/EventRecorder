@@ -13,7 +13,7 @@
         "--socket=fallback-x11",
         "--share=ipc",
         "--socket=wayland",
-        "--filesystem=home"
+        "--filesystem=~/.config/EventRecorder.ini"
     ],
     "modules": [
         {

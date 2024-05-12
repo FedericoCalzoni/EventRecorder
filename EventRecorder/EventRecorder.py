@@ -79,10 +79,16 @@ class EventRecorder(QWidget):
         config = configparser.ConfigParser()
         config['BUTTONS'] = {'Button1': 'text1',
                              'Button2': 'text2'}
-
-        # Get the XDG_CONFIG_HOME directory, falling back to ~/.config if it's not set
-        config_dir = os.getenv('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
-
+        
+        # Choose the directory for the config file based on the operating system
+        if os.name == 'nt':  # Windows
+            home_dir = os.path.expanduser('~')
+            config_dir = os.path.join(home_dir, 'AppData', 'Roaming')
+        else:  # Linux and other Unix-like systems
+            # Get the XDG_CONFIG_HOME directory, falling back to ~/.config if it's not set
+            config_dir = os.getenv('XDG_CONFIG_HOME', os.path.expanduser('~/.config'))
+            #config_dir = os.path.join(home_dir, '.config')
+            
         # Create the config directory if it doesn't exist
         os.makedirs(config_dir, exist_ok=True)
 
