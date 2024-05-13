@@ -19,10 +19,10 @@
   </screenshots>
   <url type="homepage">https://github.com/FedericoCalzoni/EventRecorder</url>
   <content_rating type="oars-1.1" />
-  <developer>
+  <developer id="io.github.federicocalzoni">
     <name>Federico Calzoni</name>
   </developer>
   <releases>
-    <release version="1.0.3" date="2024-05-13"/>
+    <release version="1.0.4" date="2024-05-13"/>
   </releases>
 </component>
