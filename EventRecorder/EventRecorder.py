@@ -135,7 +135,7 @@ class EventRecorder(QWidget):
         self.file_path_layout.addWidget(QLabel("File Path:"))
         self.file_path_display = QLineEdit()
         self.file_path_display.setReadOnly(True)
-        self.file_path_display.setText(self.get_real_path(self.csv_file_path)) 
+        self.file_path_display.setText(self.csv_file_path) 
         self.file_path_layout.addWidget(self.file_path_display)
         self.left_column_layout.addLayout(self.file_path_layout)
         
@@ -264,7 +264,7 @@ class EventRecorder(QWidget):
                 if not file.endswith('.csv'):
                     file += '.csv'
                 self.csv_file_path = file
-                self.file_path_display.setText(self.get_real_path(file))
+                self.file_path_display.setText(file)
                 
                 # Write the current events to the new file
                 with open(file, mode="w", newline="") as csv_file:
@@ -293,7 +293,7 @@ class EventRecorder(QWidget):
                     reader = csv.reader(csv_file)
                     for row in reader:
                         self.listbox.addItem(f"{row[0]}: {row[1]}: {row[2]}")
-                self.file_path_display.setText(self.get_real_path(file))
+                self.file_path_display.setText(file)
             self.update_listbox()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error loading file, not a valid CSV: {e}")
@@ -377,28 +377,7 @@ class EventRecorder(QWidget):
             config_file_path = os.path.join(config_dir, 'EventRecorder.ini')
 
             # Open the config file with the default application
-            QDesktopServices.openUrl(QUrl.fromLocalFile(config_file_path))
-            
-    def get_real_path(self, sandbox_path):
-            
-        if os.name == 'nt':
-            return sandbox_path
-        else:
-            try:
-                # Get the document ID from the sandbox path
-                doc_id = os.path.basename(os.path.dirname(sandbox_path))
-
-                # Run xdg-document-portal to get the real path
-                result = subprocess.run(['xdg-document-portal', 'info', doc_id, doc_id], stdout=subprocess.PIPE)
-
-                # Parse the output to get the real path
-                real_path = result.stdout.decode().split('path:')[1].strip()
-            except Exception as e:
-                real_path = sandbox_path
-
-        return real_path
-
-        
+            QDesktopServices.openUrl(QUrl.fromLocalFile(config_file_path))        
         
 def main():
     app = QApplication(sys.argv)
