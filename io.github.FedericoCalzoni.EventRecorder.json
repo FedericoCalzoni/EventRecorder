@@ -39,8 +39,7 @@
                 }
             ],
             "build-commands": [
-                "install -D EventRecorder.py /app/bin/EventRecorder.py",
-                "chmod +x /app/bin/EventRecorder.py",
+                "install -Dm755 EventRecorder.py /app/bin/EventRecorder.py",
                 "install -D logo.png /app/share/icons/hicolor/128x128/apps/io.github.FedericoCalzoni.EventRecorder.png",
                 "install -D io.github.FedericoCalzoni.EventRecorder.desktop /app/share/applications/io.github.FedericoCalzoni.EventRecorder.desktop",
                 "install -D io.github.FedericoCalzoni.EventRecorder.metainfo.xml /app/share/metainfo/io.github.FedericoCalzoni.EventRecorder.metainfo.xml"
