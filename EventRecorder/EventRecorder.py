@@ -301,8 +301,11 @@ class EventRecorder(QWidget):
                     
 
     def delete_selected(self):
-        for item in self.table.selectedItems():
-            self.table.removeRow(self.table.row(item))
+        selected_rows = list(set(index.row() for index in self.table.selectionModel().selectedRows()))
+        if not selected_rows:  # If no whole rows are selected, get rows of selected items
+            selected_rows = list(set(item.row() for item in self.table.selectedItems()))
+        for row in sorted(selected_rows, reverse=True):
+            self.table.removeRow(row)
 
         self.write_table_to_csv()
         self.update_table()
