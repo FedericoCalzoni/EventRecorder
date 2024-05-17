@@ -6,7 +6,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QPushButton,
-    QListWidget,
     QLineEdit,
     QFileDialog,
     QPlainTextEdit,
@@ -16,6 +15,9 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QGridLayout,
     QMessageBox,
+    QTableWidget,
+    QTableWidgetItem,
+    QHeaderView
 )
 from PyQt6.QtCore import QTimer, QUrl, Qt, QSize
 from PyQt6.QtGui import QTextCursor, QDesktopServices, QFont
@@ -24,7 +26,6 @@ import csv
 import sys
 import configparser
 import os
-import subprocess
 
 
 class CustomDialog(QDialog):
@@ -78,8 +79,12 @@ class EventRecorder(QWidget):
                 
     def create_config(self):
         config = configparser.ConfigParser()
-        config['BUTTONS'] = {'Button1': 'text1',
-                             'Button2': 'text2'}
+        config['BUTTONS'] = {'Button1': 'These are',
+                             'Button2': 'customizable buttons.',
+                             'Button3': 'You can',
+                             'Button4': 'customize them',
+                             'Button5': 'by changing',
+                             'Button6': 'the config file.'}
         
         # Choose the directory for the config file based on the operating system
         if os.name == 'nt':  # Windows
@@ -113,8 +118,13 @@ class EventRecorder(QWidget):
     
     def __init__(self):
         super().__init__()
+        
+        QApplication.instance().focusChanged.connect(self.check_focus)
              
         self.csv_file_path = ''
+        self.stop_clock_when_typing = QCheckBox('Stop clock when typing')
+        self.event_entry = QPlainTextEdit()
+        self.clock_label = QLineEdit()
         
         config_file_path = self.create_config()
         
@@ -123,8 +133,8 @@ class EventRecorder(QWidget):
         self.setGeometry(100, 100, 950, 400)
                 
         self.timer = QTimer()
+        self.timer.start(200)  # Update every 0.2 seconds
         self.timer.timeout.connect(self.update_clock)
-        self.timer.start(1000)  # Update every second
         
         self.main_layout = QHBoxLayout()
 
@@ -148,36 +158,40 @@ class EventRecorder(QWidget):
 
         self.load_button = QPushButton('Load File')
         self.load_button.clicked.connect(self.load_csv)
-        self.load_grid.addWidget(self.load_button, 0, 1)       
-
-        self.listbox_label = QLabel("Event List: (double click to copy)")
-        self.left_column_layout.addWidget(self.listbox_label)
-
-        self.listbox = QListWidget()
-        self.listbox.setFont(QFont("TypeWriter"))
-        self.listbox.itemDoubleClicked.connect(self.copy_to_entry) 
-        self.left_column_layout.addWidget(self.listbox)
+        self.load_grid.addWidget(self.load_button, 0, 1)
         
-        self.time_layout = QHBoxLayout()
-        self.clock_label = QLineEdit()
-        self.clock_label.setReadOnly(True)
-        self.time_layout.addWidget(self.clock_label)
-        self.right_column_layout.addLayout(self.time_layout)
+        self.table = QTableWidget(self)
+        self.table.setColumnCount(3)  # Adjust this to match the number of columns in your CSV
+        self.table.setHorizontalHeaderLabels(["Date", "Time", "Event"])  # Adjust these to match the headers of your CSV
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        self.table.itemChanged.connect(self.update_table)
+        self.table.setFont(QFont("TypeWriter"))
+        self.table.itemDoubleClicked.connect(self.copy_to_entry)
+        self.left_column_layout.addWidget(self.table)
         
-        self.event_entry = QPlainTextEdit()
-        self.event_entry.setPlaceholderText("Insert text here")
+        self.event_entry.setPlaceholderText("Type text here, or copy from table by double-click")
         self.event_entry.setFont(QFont("TypeWriter"))
         self.event_entry.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.event_entry.blockCountChanged.connect(self.check_for_enter)
-        self.right_column_layout.addWidget(QLabel("Enter Event:"))
+        self.right_column_layout.addWidget(QLabel("New Event:"))
+        self.time_layout = QHBoxLayout()
+        self.time_layout.addWidget(self.clock_label)
+        self.right_column_layout.addLayout(self.time_layout)
         self.right_column_layout.addWidget(self.event_entry)
         
+        #TODO to remove in the future
         self.auto_delete_checkbox = QCheckBox('Clear event after recording')
         self.auto_delete_checkbox.setChecked(True)
         self.right_column_layout.addWidget(self.auto_delete_checkbox)
+        
+        self.stop_clock_when_typing.setChecked(False)
+        self.right_column_layout.addWidget(self.stop_clock_when_typing)
 
         self.record_button = QPushButton('Record Event (Press Enter)')
-        self.record_button.clicked.connect(lambda: self.record_event(self.event_entry.toPlainText().strip()))
+        self.record_button.clicked.connect(lambda: self.record_event(self.event_entry.toPlainText().strip(), None, self.update_clock(False)))
         self.right_column_layout.addWidget(self.record_button)
 
         self.delete_button = QPushButton('Delete Selected')
@@ -208,27 +222,54 @@ class EventRecorder(QWidget):
         
         # to show the UI before the dialog
         QTimer.singleShot(0, self.choose_file)
+        
+    def check_focus(self, old, new):
+        if new != self.table and new != self.delete_button:
+            self.table.clearSelection()
                 
-    def update_clock(self):
-        current_time = datetime.now().strftime("Current time: %Y-%m-%d %H:%M:%S")
-        self.clock_label.setText(current_time)
+    def update_clock(self, forced=False):
+        current_time = self.clock_label.text()
+        if forced or not self.stop_clock_when_typing.isChecked() or self.event_entry.toPlainText().strip() == '':
+            date = datetime.now().strftime("%Y-%m-%d")
+            time = datetime.now().strftime("%H:%M:%S")
+            current_time = date + ", " + time
+            self.clock_label.setText(current_time)
+            self.clock_label.setStyleSheet("background-color: rgb(230, 230, 230)")
+            self.clock_label.setReadOnly(True)
+        else:
+            self.clock_label.setReadOnly(False)
+            self.clock_label.setStyleSheet("background-color: none")
+        return current_time
+          
+    
+    def write_table_to_csv(self):
+        with open(self.csv_file_path, mode="w", newline="") as file:
+            writer = csv.writer(file)
+            for row in range(self.table.rowCount()):
+                row_data = []
+                for column in range(self.table.columnCount()):
+                    item = self.table.item(self.table.visualRow(row), column)
+                    if item is not None:
+                        row_data.append(item.text())
+                    else:
+                        row_data.append('')
+                writer.writerow(row_data)
 
-    def record_event(self, text=None, button=None):
+    def record_event(self, text=None, button=None, current_time=None):
         event_text = text if text is not None else self.event_entry.toPlainText().strip()
+        
         if not event_text:  # If event_text is empty
             self.event_entry.clear() # to prevent enter key from being recorded
             return  # Return early
         
-        current_day = datetime.now().strftime("%Y-%m-%d")
-        current_hour= datetime.now().strftime("%H:%M:%S")
-        self.listbox.addItem(f"{current_day}: {current_hour}: {event_text}")
-        self.listbox.scrollToItem(self.listbox.item(self.listbox.count() - 1))  # Scroll to the last item
+        row_count = self.table.rowCount()
+        self.table.insertRow(row_count)
+        self.table.setItem(row_count, 0, QTableWidgetItem(current_time.split(", ", 1)[0]))
+        self.table.setItem(row_count, 1, QTableWidgetItem(current_time.split(", ", 1)[1]))
+        self.table.setItem(row_count, 2, QTableWidgetItem(event_text))
+        self.table.scrollToItem(self.table.item(row_count, 0))
 
-        # Write to the CSV file
-        with open(self.csv_file_path, mode="w", newline="") as file:
-            writer = csv.writer(file)
-            for i in range(self.listbox.count()):
-                writer.writerow(self.listbox.item(i).text().split(": ", 2))
+        self.write_table_to_csv()
         
         if self.auto_delete_checkbox.isChecked() and button is None:        
             self.event_entry.clear()
@@ -243,58 +284,78 @@ class EventRecorder(QWidget):
             cursor.movePosition(QTextCursor.MoveOperation.End)
             self.event_entry.setTextCursor(cursor)
         
-        self.update_listbox()
+        self.update_table()
+        
+    def update_table(self):
+        if self.table.rowCount() == 0:
+            # inform user that there are no events
+            self.table.setStyleSheet("background-color: rgb(230, 230, 230)")
+        else:
+            self.table.setStyleSheet("background-color: none")
+        
+        # Sort the table by date and time
+        self.table.sortItems(1)
+        self.table.sortItems(0)
+        
+        self.write_table_to_csv()
                     
 
     def delete_selected(self):
-        for item in self.listbox.selectedItems():
-            self.listbox.takeItem(self.listbox.row(item))
+        for item in self.table.selectedItems():
+            self.table.removeRow(self.table.row(item))
 
-        # Update the CSV file
-        with open(self.csv_file_path, mode="w", newline="") as file:
-            writer = csv.writer(file)
-            for i in range(self.listbox.count()):
-                writer.writerow(self.listbox.item(i).text().split(": ", 2))
-        self.update_listbox()
+        self.write_table_to_csv()
+        self.update_table()
 
     def choose_save_location(self):
         try:
-            file, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()", "","CSV Files (*.csv)")
+            file, _ = QFileDialog.getSaveFileName(self,"Select Location to Save CSV File", "untitled.csv","CSV Files (*.csv)")
             if file:
-                if not file.endswith('.csv'):
-                    file += '.csv'
                 self.csv_file_path = file
                 self.file_path_display.setText(file)
                 
                 # Write the current events to the new file
                 with open(file, mode="w", newline="") as csv_file:
                     writer = csv.writer(csv_file)
-                    for i in range(self.listbox.count()):
-                        writer.writerow(self.listbox.item(i).text().split(": ", 1))
+                    for row in range(self.table.rowCount()):
+                        row_data = []
+                        for column in range(self.table.columnCount()):
+                            item = self.table.item(row, column)
+                            if item is not None:
+                                row_data.append(item.text())
+                            else:
+                                row_data.append('')
+                        writer.writerow(row_data)
                 
                 # Load the events from the new file
-                self.listbox.clear()
+                self.table.setRowCount(0) 
                 with open(file, mode="r", newline="") as csv_file:
                     reader = csv.reader(csv_file)
                     for row in reader:
-                        self.listbox.addItem(f"{row[0]}: {row[1]}")
-            self.update_listbox()
+                        row_num = self.table.rowCount()
+                        self.table.insertRow(row_num)
+                        for col_num, data in enumerate(row):
+                            self.table.setItem(row_num, col_num, QTableWidgetItem(str(data)))
+            self.update_table()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error saving file: {e}")
             self.choose_file()
     
     def load_csv(self):
         try:
-            file, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","CSV Files (*.csv)")
+            file, _ = QFileDialog.getOpenFileName(self,"Select CSV File to Open", "","CSV Files (*.csv);;All Files (*)")
             if file:
                 self.csv_file_path = file
-                self.listbox.clear()
+                self.table.setRowCount(0)  # Clear the table
                 with open(file, mode="r", newline="") as csv_file:
                     reader = csv.reader(csv_file)
                     for row in reader:
-                        self.listbox.addItem(f"{row[0]}: {row[1]}: {row[2]}")
+                        row_num = self.table.rowCount()
+                        self.table.insertRow(row_num)
+                        for col_num, data in enumerate(row):
+                            self.table.setItem(row_num, col_num, QTableWidgetItem(str(data)))
                 self.file_path_display.setText(file)
-            self.update_listbox()
+            self.update_table()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error loading file, not a valid CSV: {e}")
             self.choose_file()
@@ -313,10 +374,10 @@ class EventRecorder(QWidget):
             
             # Add the buttons from the config file
             for index, (button_name, button_text) in enumerate(config['BUTTONS'].items()):
-                # Limit the displayed text to 20 characters
-                displayed_text = button_text[:20] + '...' if len(button_text) > 20 else button_text
+                # Limit the displayed text to 25 characters
+                displayed_text = button_text[:25] + '...' if len(button_text) > 25 else button_text
                 button = QPushButton(displayed_text)
-                button.clicked.connect(lambda checked, button_text=button_text: self.record_event(button_text, button))
+                button.clicked.connect(lambda checked, button_text=button_text: self.record_event(button_text, button, self.update_clock(True)))
                 row = index // 3  # Integer division to get the row number
                 col = index % 3  # Remainder to get the column number
                 self.button2_grid.addWidget(button, row, col)
@@ -342,27 +403,17 @@ class EventRecorder(QWidget):
 
         if self.csv_file_path == '':
             self.choose_file()
-            
+        
     def copy_to_entry(self, item):
-        text_parts = item.text().split(": ", 2)
-        if len(text_parts) > 2 and text_parts[2]:
-            self.event_entry.setPlainText(text_parts[2])
+        if item is not None:
+            self.event_entry.setPlainText(item.text())
         else:
             self.event_entry.setPlainText("")
         
-    def check_for_enter(self, block_count):
+    def check_for_enter(self):
         text = self.event_entry.toPlainText()
         if text and text[-1] == "\n":
-            self.record_event()
-            
-    def update_listbox(self):
-        if self.listbox.count() == 0:
-            # inform user that there are no events
-            self.listbox.setStyleSheet("background-color: rgb(230, 230, 230)")
-            self.listbox_label.setText("Event List: (empty list)")
-        else:
-            self.listbox.setStyleSheet("background-color: none")
-            self.listbox_label.setText("Event List: (double click to copy)")
+            self.record_event(text.strip(), None, self.update_clock(False))
             
     def open_config(self):
             home_dir = os.path.expanduser('~')
@@ -377,8 +428,9 @@ class EventRecorder(QWidget):
             config_file_path = os.path.join(config_dir, 'EventRecorder.ini')
 
             # Open the config file with the default application
-            QDesktopServices.openUrl(QUrl.fromLocalFile(config_file_path))        
-        
+            QDesktopServices.openUrl(QUrl.fromLocalFile(config_file_path))
+            
+
 def main():
     app = QApplication(sys.argv)
     
