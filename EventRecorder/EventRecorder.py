@@ -169,10 +169,12 @@ class EventRecorder(QWidget):
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         self.table.itemChanged.connect(self.update_table)
         self.table.setFont(QFont("TypeWriter"))
-        self.table.itemDoubleClicked.connect(self.copy_to_entry)
+        self.table.itemActivated.connect(self.copy_to_entry)
         self.left_column_layout.addWidget(self.table)
         
-        self.event_entry.setPlaceholderText("Type text here, or copy from table by double-click")
+        
+        self.event_entry.setPlaceholderText("Type or paste text here...")
+        self.table.setToolTip("Select a cell and press Enter to copy its content to the text field.")
         self.event_entry.setFont(QFont("TypeWriter"))
         self.event_entry.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.event_entry.blockCountChanged.connect(self.check_for_enter)
@@ -256,6 +258,10 @@ class EventRecorder(QWidget):
                 writer.writerow(row_data)
 
     def record_event(self, text=None, button=None, current_time=None):
+        try:
+            self.table.itemChanged.disconnect(self.update_table)  # Disconnect the signal
+        except TypeError:
+            pass  # Signal was not connected
         event_text = text if text is not None else self.event_entry.toPlainText().strip()
         
         if not event_text:  # If event_text is empty
@@ -285,8 +291,10 @@ class EventRecorder(QWidget):
             self.event_entry.setTextCursor(cursor)
         
         self.update_table()
+        self.table.itemChanged.connect(self.update_table)  # Reconnect the signal
         
     def update_table(self):
+        print("Updating table at ", datetime.now().strftime("%H:%M:%S"))
         if self.table.rowCount() == 0:
             # inform user that there are no events
             self.table.setStyleSheet("background-color: rgb(230, 230, 230)")
@@ -332,6 +340,10 @@ class EventRecorder(QWidget):
                 
                 # Load the events from the new file
                 self.table.setRowCount(0) 
+                try:
+                    self.table.itemChanged.disconnect(self.update_table)  # Disconnect the signal
+                except TypeError:
+                    pass  # Signal was not connected
                 with open(file, mode="r", newline="") as csv_file:
                     reader = csv.reader(csv_file)
                     for row in reader:
@@ -339,7 +351,8 @@ class EventRecorder(QWidget):
                         self.table.insertRow(row_num)
                         for col_num, data in enumerate(row):
                             self.table.setItem(row_num, col_num, QTableWidgetItem(str(data)))
-            self.update_table()
+                self.update_table()
+                self.table.itemChanged.connect(self.update_table)  # Reconnect the signal
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error saving file: {e}")
             self.choose_file()
@@ -350,15 +363,22 @@ class EventRecorder(QWidget):
             if file:
                 self.csv_file_path = file
                 self.table.setRowCount(0)  # Clear the table
+                try:
+                    self.table.itemChanged.disconnect(self.update_table)  # Disconnect the signal
+                except TypeError:
+                    pass  # Signal was not connected
                 with open(file, mode="r", newline="") as csv_file:
                     reader = csv.reader(csv_file)
                     for row in reader:
+                        if len(row) != 3:
+                            raise ValueError("Each row in the CSV file must have exactly 3 columns")
                         row_num = self.table.rowCount()
                         self.table.insertRow(row_num)
                         for col_num, data in enumerate(row):
                             self.table.setItem(row_num, col_num, QTableWidgetItem(str(data)))
                 self.file_path_display.setText(file)
-            self.update_table()
+                self.update_table()
+                self.table.itemChanged.connect(self.update_table)  # Reconnect the signal
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error loading file, not a valid CSV: {e}")
             self.choose_file()
