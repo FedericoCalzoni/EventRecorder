@@ -5,7 +5,7 @@ EventRecorder is a simple application to record timed events. It is useful to ke
 ## Linux
 You can easily install EventRecorder via Flathub:
 <p>
-<a href="https://flathub.org/apps/io.github.FedericoCalzoni.EventRecorder">
+<a href="https://flathub.org/apps/details/io.github.FedericoCalzoni.EventRecorder">
   <img  alt="Download on Flathub" src="https://flathub.org/assets/badges/flathub-badge-en.png" width="150">
 </a>
 </p>
